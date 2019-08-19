@@ -35,8 +35,9 @@ describe('jQuery', function () {
 
   it('should able to request https://raw.githubusercontent.com/FE-star/exercise1/master/test/test.js', function (done) {
     // 使用 jQuery.ajax 请求 https://raw.githubusercontent.com/FE-star/exercise1/master/test/test.js，并验证是否拿到文件
-    jQuery.ajax({
-      url:'https://raw.githubusercontent.com/FE-star/exercise1/master/test/test.js'
+    jQuery.get({
+      url:'https://raw.githubusercontent.com/FE-star/exercise1/master/test/test.js',
+      type:'get'
     }).done(function(data){
       if(!!data) done()
     })
