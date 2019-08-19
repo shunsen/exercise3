@@ -56,81 +56,124 @@
 //   })
 // }
 
-const path = require('path');
+var RewirePlugin = require("rewire-webpack");
 
-let browsers = ['Chrome'];  
-// trvis env
+// Karma configuration
+// Generated on Tue May 13 2014 12:20:09 GMT+0800 (CST)
 
-if (process.env.TRAVIS) {  
-  browsers = ['Chrome_travis_ci'];
-}
+module.exports = function(config) {
+  var configuration = {
+
+    // base path that will be used to resolve all patterns (eg. files, exclude)
+    basePath: '../',
 
 
-module.exports = function(config) {  
-  config.set({
-    basePath: '',
-    frameworks: ['jasmine'],
+    // frameworks to use
+    // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
+    frameworks: ['mocha', 'sinon-expect'],
+
+
+    // list of files / patterns to load in the browser
     files: [
-      './tests/**/*.js'
+      'test/unit/**/*Spec.ls',
+
+      // Fixtures
+      'test/fixtures/*.xml',
+      'test/fixtures/*.html',
+      'test/fixtures/*.css',
+      {pattern: 'test/served/*.html',   watched: true, included: false, served: true},
+      {pattern: 'test/fixtures/*.jpg',  watched: false, included: false, served: true},
+
+      // Content scripts
+      {pattern: 'src/livescript/rendererScript.ls', watched: true, included: false, served: true},
+      {pattern: 'src/livescript/injectedRendererScript.ls', watched: true, included: false, served: true},
+
+      // Filename placeholders
+      {pattern: 'test/fixtures/PLACEHOLDER',  watched: false, included: false, served: true}
     ],
+
+
+    // list of files to exclude
+    exclude: [
+
+    ],
+
+
+    // preprocess matching files before serving them to the browser
+    // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      // add webpack as preprocessor
-      'src/**/*.js': ['webpack', 'sourcemap'],
-      'tests/**/*.test.js': ['webpack', 'sourcemap']
+      '**/*.ls': ['webpack'],
+      '**/fixtures/*.html':['html2js'],
+      '**/served/*.html':[], // Remove html2js to get the file served. https://github.com/karma-runner/karma/issues/788
+      '**/*.json':['html2js'],
+      '**/*.xml':['html2js']
     },
-    // webpack file
-    webpack: { 
-      devtool: 'inline-source-map', //just do inline source maps instead of the default
+
+    webpack: {
+      cache: true,
       module: {
-        loaders: [
-          {
-            test: /\.js$/,
-            loader: 'babel',
-            exclude: path.resolve(__dirname, 'node_modules'),
-            query: {
-              presets: ['airbnb']
-            }
-          },
-          {
-            test: /\.json$/,
-            loader: 'json',
-          },
-        ]
+        loaders: [{
+          test: /\.ls$/,
+          loader: 'livescript'
+        },{
+          test: /\.coffee$/,
+          loader: 'coffee-loader'
+        }]
       },
-      externals: {
-        'react/addons': true,
-        'react/lib/ExecutionEnvironment': true,
-        'react/lib/ReactContext': true
-      }
+      plugins: [
+        new RewirePlugin()
+      ]
     },
 
-    webpackServer: {
-      noInfo: true //please don't spam the console when running in karma!
-    },
+    // test results reporter to use
+    // possible values: 'dots', 'progress'
+    // available reporters: https://npmjs.org/browse/keyword/karma-reporter
+    reporters: ['mocha'],
 
-    plugins: [
-      'karma-webpack',
-      'karma-jasmine',
-      'karma-sourcemap-loader',
-      'karma-chrome-launcher',
-    ],
 
-    babelPreprocessor: {
-      options: {
-        presets: ['airbnb']
-      }
-    },
-    // custom launchers 
-    customLaunchers: {
-        Chrome_travis_ci: {
-            base: 'Chrome',
-            flags: ['--no-sandbox']
-        }
-    },
-    reporters: ['progress'],
-    // port: 9002,
+    // web server port
+    port: 9876,
+
+
+    // enable / disable colors in the output (reporters and logs)
+    colors: true,
+
+
+    // level of logging
+    // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
     logLevel: config.LOG_INFO,
-    browsers: browsers,
-    singleRun: false,
-  })
+
+
+    // enable / disable watching file and executing tests whenever any file changes
+    autoWatch: true,
+
+
+    // start these browsers
+    // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
+    // browsers: ['Chrome', 'Safari', 'Firefox'],
+    browsers: ['Chrome', 'ChromeCanary'],
+
+    customLaunchers: {
+      Chrome_travis_ci: {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    },
+
+
+    // Continuous Integration mode
+    // if true, Karma captures browsers, runs the tests and exits
+    singleRun: false
+  };
+
+  if(process.env.TRAVIS){
+    configuration.browsers = ['Chrome_travis_ci'];
+    // configuration.reporters = configuration.reporters.concat(['coverage', 'coveralls']);
+    // configuration.coverageReporter = {
+    //   type : 'lcovonly',
+    //   dir : 'coverage/'
+    // };
+  }
+
+  config.set(configuration);
 };
